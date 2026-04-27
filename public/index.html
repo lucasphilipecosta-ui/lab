@@ -361,6 +361,19 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
         <div id="btn-parcelas" class="btn-group"></div>
       </div>
     </div>
+    <div id="maq-selector-wrap" style="display:none;margin-bottom:16px">
+      <p class="sec-title">Maquininha</p>
+      <div class="card" style="padding:12px 14px">
+        <div style="display:flex;gap:8px">
+          <button class="tab" id="maq-btn-stone" onclick="setMaqCalc('stone')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
+            <span style="width:10px;height:10px;border-radius:50%;background:#1E9E5E;display:inline-block"></span>Stone
+          </button>
+          <button class="tab" id="maq-btn-pagseguro" onclick="setMaqCalc('pagseguro')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ff9500;display:inline-block"></span>PagSeguro
+          </button>
+        </div>
+      </div>
+    </div>
     <p class="sec-title">Resultado</p>
     <div class="results-side">
       <div class="result-col">
@@ -474,8 +487,8 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
         <div class="f-row">
           <div class="f-group"><label>Acesso</label>
             <select id="new-perfil">
-              <option value="alto">Faturamento A</option>
-              <option value="baixo">Faturamento B</option>
+              <option value="alto">Faturamento Black</option>
+              <option value="baixo">Faturamento Gold</option>
               <option value="ambos">Ambos</option>
             </select>
           </div>
@@ -507,23 +520,23 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
       </div>
     </div>
 
-    <!-- TAXAS (Fat. A + Fat. B unificadas) -->
+    <!-- TAXAS (Fat. Goldlack + Fat. Gold unificadas) -->
     <div id="tab-taxas" class="admin-section">
 
       <!-- SUB-ABAS INTERNAS -->
       <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="vf-btn active" id="stab-a" onclick="setSubTab('a')">📈 Faturamento A</button>
-        <button class="vf-btn" id="stab-b" onclick="setSubTab('b')">📉 Faturamento B</button>
+        <button class="vf-btn active" id="stab-a" onclick="setSubTab('a')">📈 Faturamento Black</button>
+        <button class="vf-btn" id="stab-b" onclick="setSubTab('b')">📉 Faturamento Gold</button>
         <button class="vf-btn" id="stab-custo" onclick="setSubTab('custo')">💰 Custos das Máquinas</button>
       </div>
 
       <!-- SUB-ABA: FAT. A -->
       <div id="subtab-a">
         <div class="admin-card">
-          <h3><span>📈</span> Taxas Cobradas – Faturamento A</h3>
-          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento A.</p>
+          <h3><span>📈</span> Taxas Cobradas – Faturamento Black</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento Black.</p>
           <div id="taxa-grid-alto" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
-          <br><button class="btn-green" onclick="saveTaxas('alto')">💾 Salvar Taxas – Fat. A</button>
+          <br><button class="btn-green" onclick="saveTaxas('alto')">💾 Salvar Taxas – Fat. Goldlack</button>
           <div class="success-msg" id="msg-alto">✓ Taxas salvas!</div>
         </div>
       </div>
@@ -531,10 +544,10 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
       <!-- SUB-ABA: FAT. B -->
       <div id="subtab-b" style="display:none">
         <div class="admin-card">
-          <h3><span>📉</span> Taxas Cobradas – Faturamento B</h3>
-          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento B.</p>
+          <h3><span>📉</span> Taxas Cobradas – Faturamento Gold</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento Gold.</p>
           <div id="taxa-grid-baixo" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
-          <br><button class="btn-green" onclick="saveTaxas('baixo')">💾 Salvar Taxas – Fat. B</button>
+          <br><button class="btn-green" onclick="saveTaxas('baixo')">💾 Salvar Taxas – Fat. Gold</button>
           <div class="success-msg" id="msg-baixo">✓ Taxas salvas!</div>
         </div>
       </div>
@@ -626,8 +639,8 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
     <div class="f-row full"><div class="f-group"><label>Nova senha (em branco = manter)</label><input type="password" id="edit-pass" placeholder="Nova senha"></div></div>
     <div class="f-row full"><div class="f-group"><label>Acesso</label>
       <select id="edit-perfil">
-        <option value="alto">Faturamento A</option>
-        <option value="baixo">Faturamento B</option>
+        <option value="alto">Faturamento Black</option>
+        <option value="baixo">Faturamento Gold</option>
         <option value="ambos">Ambos</option>
       </select>
     </div></div>
@@ -847,13 +860,29 @@ async function buildCalcUI() {
     // Admin vê os dois perfis e pode alternar
     wrap.style.display = 'block';
     wrap.innerHTML = `<div class="perfil-tabs" style="margin-bottom:20px">
-      <div class="tab ${perfil==='alto'?'active':''}" id="tab-alto" onclick="setPerfil('alto')">Faturamento A</div>
-      <div class="tab ${perfil==='baixo'?'active':''}" id="tab-baixo" onclick="setPerfil('baixo')">Faturamento B</div>
+      <div class="tab ${perfil==='alto'?'active':''}" id="tab-alto" onclick="setPerfil('alto')">Faturamento Black</div>
+      <div class="tab ${perfil==='baixo'?'active':''}" id="tab-baixo" onclick="setPerfil('baixo')">Faturamento Gold</div>
     </div>`;
   } else {
     // Usuário normal — perfil fixo definido pelo admin
     wrap.style.display = 'none';
     if (u.perfil !== 'ambos') perfil = u.perfil;
+  }
+
+  // Mostra seletor de máquina se usuário tiver 'ambas'
+  const maqWrap = document.getElementById('maq-selector-wrap');
+  if (maqWrap) {
+    const temAmbas = (u.maquina_tipo || 'stone') === 'ambas';
+    maqWrap.style.display = temAmbas ? 'block' : 'none';
+    if (temAmbas) {
+      maqCalcSel = 'stone';
+      const bs = document.getElementById('maq-btn-stone');
+      const bp = document.getElementById('maq-btn-pagseguro');
+      if(bs) bs.className = 'tab active';
+      if(bp) bp.className = 'tab';
+    } else {
+      maqCalcSel = u.maquina_tipo || 'stone';
+    }
   }
 
   renderBotoes(); calcular();
@@ -988,9 +1017,11 @@ async function registrarVenda() {
     valorCobrar = valor;
     valorLiquido = valor - desc;
   }
+  // Determina maquina usada na venda
+  const maqUsada = (currentUser.maquina_tipo==='ambas') ? maqCalcSel : (currentUser.maquina_tipo||'stone');
   try {
     await api('POST','/api/vendas',{
-      valor_bruto:valorCobrar, taxa, desconto:desc, liquido:valorLiquido,
+      valor_bruto:valorCobrar, taxa, desconto:desc, liquido:valorLiquido, maquina_tipo:maqUsada,
       parcela:parcelaSel, bandeira:bandeiraSel==='vm'?'Visa/Master':'Elo/Amex', perfil
     });
     const conf=document.getElementById('venda-confirm');
@@ -1040,7 +1071,7 @@ async function renderUsersTable() {
     tbody.innerHTML='';
     users.forEach(u => {
       const badgeClass=u.perfil==='alto'?'badge-alto':u.perfil==='baixo'?'badge-baixo':'badge-ambos';
-      const badgeLabel=u.perfil==='alto'?'Fat. A':u.perfil==='baixo'?'Fat. B':'Ambos';
+      const badgeLabel=u.perfil==='alto'?'Fat. Goldlack':u.perfil==='baixo'?'Fat. Gold':'Ambos';
       const adminTag = u.is_admin?'<span style="font-size:10px;color:#ffc400;margin-left:4px">★</span>':'';
       const delBtn = u.is_admin?'':'<button class="btn-red btn-sm" onclick="deleteUser('+u.id+')">Excluir</button>';
       const vStr = u.qtd_vendas>0
@@ -1443,6 +1474,14 @@ async function saveCusto(tipo) {
 
 // ── HISTÓRICO DO USUÁRIO ──
 let tipoValor = 'receber'; // 'receber' ou 'cobrar'
+let maqCalcSel = 'stone'; // maquina selecionada na calculadora
+
+function setMaqCalc(m) {
+  maqCalcSel = m;
+  document.getElementById('maq-btn-stone').className     = 'tab' + (m==='stone'     ? ' active' : '');
+  document.getElementById('maq-btn-pagseguro').className = 'tab' + (m==='pagseguro' ? ' active' : '');
+  calcular();
+}
 
 function setTipoValor(tipo) {
   tipoValor = tipo;

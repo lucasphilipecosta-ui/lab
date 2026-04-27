@@ -783,8 +783,9 @@ async function afterLogin() {
   perfil     = currentUser.perfil === 'ambos' || currentUser.perfil === 'alto' ? 'alto' : 'baixo';
   parcelaSel = '1x';
   modoVenda  = 'venda'; bandeiraSel = 'vm';
-  // carrega taxas
+  // carrega taxas e custos
   await loadTaxas();
+  await loadCustos();
   if (currentUser.is_admin) {
     await buildAdminUI(); showPage('page-admin');
   } else {
@@ -804,6 +805,24 @@ function doLogout() {
 // ═══════════════════════════════════════════
 //  TAXAS
 // ═══════════════════════════════════════════
+async function loadCustos() {
+  try {
+    const [stone, pagseguro] = await Promise.all([
+      api('GET', '/api/custos/stone'),
+      api('GET', '/api/custos/pagseguro'),
+    ]);
+    // Atualiza o objeto CUSTOS com dados do banco
+    stone.forEach(r => {
+      CUSTOS.stone.vm[r.label] = parseFloat(r.vm);
+      CUSTOS.stone.ea[r.label] = parseFloat(r.ea);
+    });
+    pagseguro.forEach(r => {
+      CUSTOS.pagseguro.vm[r.label] = parseFloat(r.vm);
+      CUSTOS.pagseguro.ea[r.label] = parseFloat(r.ea);
+    });
+  } catch(e) { console.warn('Erro ao carregar custos:', e); }
+}
+
 async function loadTaxas() {
   const [alto, baixo] = await Promise.all([
     api('GET','/api/taxas/alto'),
@@ -998,9 +1017,9 @@ async function buildAdminUI() {
     renderUsersTable(),
     buildTaxaGrid('alto'),
     buildTaxaGrid('baixo'),
+    buildCustoGrid('stone'),
+    buildCustoGrid('pagseguro'),
   ]);
-  buildCustoGrid('stone');
-  buildCustoGrid('pagseguro');
 }
 
 // ── USUÁRIOS ──
@@ -1334,10 +1353,18 @@ function closeDetModal() { document.getElementById('modal-det').classList.remove
 
 // ── UTILS ──
 // ── CUSTO DAS MÁQUINAS (editável pelo admin) ──
-function buildCustoGrid(tipo) {
+async function buildCustoGrid(tipo) {
   const gridId = 'custo-grid-' + tipo;
   const grid = document.getElementById(gridId);
   if (!grid) return;
+  // Recarrega do banco
+  try {
+    const rows = await api('GET', '/api/custos/'+tipo);
+    rows.forEach(r => {
+      CUSTOS[tipo].vm[r.label] = parseFloat(r.vm);
+      CUSTOS[tipo].ea[r.label] = parseFloat(r.ea);
+    });
+  } catch(e) { console.warn('Erro ao carregar custos:', e); }
   const custosVM = CUSTOS[tipo].vm;
   const custosEA = CUSTOS[tipo].ea;
   const color = tipo === 'stone' ? '#1E9E5E' : '#ff9500';
@@ -1385,17 +1412,23 @@ function buildCustoGridReadonly(tipo, gridId) {
   });
 }
 
-function saveCusto(tipo) {
+async function saveCusto(tipo) {
   const keys = Object.keys(CUSTOS[tipo].vm);
+  const custos = [];
   keys.forEach((label, i) => {
     const elVM = document.getElementById(`custo-${tipo}-vm-${i}`);
     const elEA = document.getElementById(`custo-${tipo}-ea-${i}`);
-    if (elVM) CUSTOS[tipo].vm[label] = parseFloat(elVM.value)||0;
-    if (elEA) CUSTOS[tipo].ea[label] = parseFloat(elEA.value)||0;
+    const vm = parseFloat(elVM?.value)||0;
+    const ea = parseFloat(elEA?.value)||0;
+    CUSTOS[tipo].vm[label] = vm;
+    CUSTOS[tipo].ea[label] = ea;
+    custos.push({ label, vm, ea });
   });
-  buildCustoGridReadonly(tipo, 'custo-grid-' + tipo + '-baixo');
-  const msg = document.getElementById('msg-custo-' + tipo);
-  if (msg) { msg.style.display='block'; setTimeout(()=>msg.style.display='none',3000); }
+  try {
+    await api('PUT', '/api/custos/'+tipo, { custos });
+    const msg = document.getElementById('msg-custo-' + tipo);
+    if (msg) { msg.style.display='block'; setTimeout(()=>msg.style.display='none',3000); }
+  } catch(e) { alert('Erro ao salvar custos: '+e.message); }
 }
 
 // ── HISTÓRICO DO USUÁRIO ──

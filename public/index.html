@@ -157,6 +157,101 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
 .loading{text-align:center;padding:40px;color:#444;font-size:13px}
 .spinner{display:inline-block;width:20px;height:20px;border:2px solid #333;border-top-color:#1E9E5E;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══ RESPONSIVO MOBILE ══ */
+@media (max-width: 600px) {
+
+  /* LOGIN */
+  .login-card { padding: 28px 20px; }
+  .login-tagline { font-size: 10px; margin-bottom: 28px; }
+
+  /* HERO */
+  .hero { padding: 24px 16px 0; }
+  .hero-title { font-size: 24px; }
+  .hero-green { padding: 24px 16px 16px; }
+  .hero-green-big { font-size: 22px; }
+  .hero-green-sub { font-size: 17px; }
+
+  /* BODY */
+  .body-wrap { padding: 16px 12px 32px; }
+
+  /* TOPBAR */
+  .topbar { padding: 10px 14px; }
+  .topbar img { height: 26px; }
+  .topbar-user { display: none; }
+  .topbar-badge { display: none; }
+  .btn-topbar { font-size: 11px; padding: 5px 10px; }
+
+  /* CARDS */
+  .card { padding: 12px 14px; }
+
+  /* INPUT ROW */
+  .input-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .input-row label { min-width: unset; font-size: 12px; }
+  .input-prefix { width: 100%; }
+  input[type=number] { font-size: 16px; }
+
+  /* PARCELAS */
+  .btn-parc { padding: 7px 9px; font-size: 11px; }
+
+  /* RESULTADO */
+  .results-side { grid-template-columns: 1fr; gap: 8px; }
+  .mvalue.big { font-size: 18px; }
+
+  /* VENDA */
+  .venda-toggle button { font-size: 11px; padding: 9px 4px; }
+
+  /* TABELA CALCULADORA */
+  table { font-size: 11px; }
+  th, td { padding: 6px 5px; }
+
+  /* ADMIN TABS */
+  .admin-tabs { gap: 4px; }
+  .admin-tab { padding: 6px 10px; font-size: 11px; }
+  .admin-body { padding: 12px; }
+  .admin-card { padding: 14px 12px; }
+  .admin-card h3 { font-size: 13px; }
+
+  /* FORM ROWS */
+  .f-row { grid-template-columns: 1fr; }
+  .f-group input, .f-group select { font-size: 14px; padding: 10px; }
+
+  /* TAXA GRID */
+  .taxa-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+
+  /* VT CARDS */
+  .vt-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .vt-mini-value { font-size: 14px; }
+
+  /* DET CARDS */
+  .det-cards { grid-template-columns: 1fr; gap: 8px; }
+
+  /* MODAL */
+  .modal { padding: 20px 16px; width: 96%; }
+  .modal-wide { padding: 16px 12px; width: 98%; }
+  .modal-btns { flex-direction: column; }
+
+  /* HISTORICO USER */
+  #hist-bruto, #hist-lucro { font-size: 14px; }
+
+  /* TABELA ADMIN */
+  .atable { font-size: 11px; min-width: 500px; }
+  .atable th, .atable td { padding: 7px 8px; }
+
+  /* VENDAS FILTER */
+  .vendas-filter, .det-filter { gap: 4px; }
+  .vf-btn, .det-btn { padding: 5px 10px; font-size: 10px; }
+
+  /* REGISTRAR VENDA */
+  .btn-registrar { font-size: 13px; padding: 12px; }
+}
+
+@media (max-width: 380px) {
+  .hero-title { font-size: 20px; }
+  .btn-parc { padding: 6px 7px; font-size: 10px; }
+  .vt-cards { grid-template-columns: 1fr; }
+  .results-side { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>

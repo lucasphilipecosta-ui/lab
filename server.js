@@ -74,6 +74,17 @@ async function initDB() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS custos (
+        id       INT AUTO_INCREMENT PRIMARY KEY,
+        maquina  VARCHAR(30)  NOT NULL,
+        label    VARCHAR(20)  NOT NULL,
+        vm       DECIMAL(6,2) NOT NULL DEFAULT 0,
+        ea       DECIMAL(6,2) NOT NULL DEFAULT 0,
+        UNIQUE KEY maquina_label (maquina, label)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     // Adiciona coluna maquina_tipo se nao existir (compatibilidade)
     try {
       await conn.query("ALTER TABLE usuarios ADD COLUMN maquina_tipo VARCHAR(50) DEFAULT 'stone'");
@@ -83,6 +94,7 @@ async function initDB() {
     console.log('✓ Tabelas verificadas/criadas');
     await seedUsuarios(conn);
     await seedTaxas(conn);
+    await seedCustos(conn);
   } finally {
     conn.release();
   }
@@ -117,6 +129,49 @@ async function seedUsuarios(conn) {
 // ═══════════════════════════════════════════
 //  SEED TAXAS
 // ═══════════════════════════════════════════
+async function seedCustos(conn) {
+  const [rows] = await conn.query('SELECT COUNT(*) as c FROM custos');
+  if (rows[0].c > 0) return;
+
+  const stone = [
+    {label:'Débito', vm:0.74, ea:0},
+    {label:'1x',     vm:2.99, ea:3.14},
+    {label:'2x',     vm:3.89, ea:4.03},
+    {label:'3x',     vm:4.48, ea:4.63},
+    {label:'4x',     vm:5.07, ea:5.21},
+    {label:'5x',     vm:5.65, ea:5.80},
+    {label:'6x',     vm:6.24, ea:6.36},
+    {label:'7x',     vm:7.05, ea:7.47},
+    {label:'8x',     vm:7.63, ea:8.05},
+    {label:'9x',     vm:8.22, ea:8.64},
+    {label:'10x',    vm:8.80, ea:9.22},
+    {label:'11x',    vm:9.39, ea:9.80},
+    {label:'12x',    vm:9.98, ea:10.38},
+  ];
+  const pagseguro = [
+    {label:'Débito', vm:0.99, ea:0},
+    {label:'1x',     vm:2.99, ea:3.69},
+    {label:'2x',     vm:3.83, ea:4.87},
+    {label:'3x',     vm:4.48, ea:5.52},
+    {label:'4x',     vm:5.12, ea:6.16},
+    {label:'5x',     vm:5.76, ea:6.80},
+    {label:'6x',     vm:6.39, ea:7.43},
+    {label:'7x',     vm:7.21, ea:8.84},
+    {label:'8x',     vm:7.83, ea:9.46},
+    {label:'9x',     vm:8.44, ea:10.07},
+    {label:'10x',    vm:9.05, ea:10.68},
+    {label:'11x',    vm:9.65, ea:11.29},
+    {label:'12x',    vm:10.25,ea:11.88},
+  ];
+
+  for (const t of stone)
+    await conn.query('INSERT IGNORE INTO custos (maquina,label,vm,ea) VALUES (?,?,?,?)', ['stone', t.label, t.vm, t.ea]);
+  for (const t of pagseguro)
+    await conn.query('INSERT IGNORE INTO custos (maquina,label,vm,ea) VALUES (?,?,?,?)', ['pagseguro', t.label, t.vm, t.ea]);
+
+  console.log('✓ Custos padrão criados');
+}
+
 async function seedTaxas(conn) {
   const [rows] = await conn.query('SELECT COUNT(*) as c FROM taxas');
   if (rows[0].c > 0) return;
@@ -420,6 +475,32 @@ app.delete('/api/vendas/:id', authMiddleware, async (req, res) => {
 });
 
 
+
+// GET /api/custos/:maquina
+app.get('/api/custos/:maquina', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT label, vm, ea FROM custos WHERE maquina = ? ORDER BY id',
+      [req.params.maquina]
+    );
+    res.json(rows);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/custos/:maquina (admin only)
+app.put('/api/custos/:maquina', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { custos } = req.body;
+    if (!Array.isArray(custos)) return res.status(400).json({ error: 'Dados inválidos' });
+    for (const t of custos) {
+      await pool.query(
+        'UPDATE custos SET vm=?, ea=? WHERE maquina=? AND label=?',
+        [t.vm, t.ea, req.params.maquina, t.label]
+      );
+    }
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 // Catch-all → frontend
 app.get('*', (req, res) => {

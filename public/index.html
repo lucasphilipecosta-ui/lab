@@ -574,6 +574,70 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
 
     <!-- VENDAS -->
     <div id="tab-vendas" class="admin-section">
+
+      <!-- REGISTRAR VENDA PELO ADMIN -->
+      <div class="admin-card">
+        <h3><span>➕</span> Registrar Venda para Usuário</h3>
+        <div class="f-row">
+          <div class="f-group">
+            <label>Usuário</label>
+            <select id="av-usuario" onchange="atualizarSelectsAdminVenda()"></select>
+          </div>
+          <div class="f-group">
+            <label>Tipo de valor</label>
+            <select id="av-tipo-valor">
+              <option value="receber">Valor a receber</option>
+              <option value="cobrar">Valor a cobrar</option>
+            </select>
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label>Valor (R$)</label>
+            <input type="number" id="av-valor" min="0" step="0.01" placeholder="0,00" oninput="calcAdminVenda()">
+          </div>
+          <div class="f-group">
+            <label>Parcela</label>
+            <select id="av-parcela" onchange="calcAdminVenda()"></select>
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label>Bandeira</label>
+            <select id="av-bandeira" onchange="calcAdminVenda()">
+              <option value="vm">Visa/Master</option>
+              <option value="ea">Elo/Amex</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label>Maquininha</label>
+            <select id="av-maquina" onchange="calcAdminVenda()">
+              <option value="stone">Stone</option>
+              <option value="pagseguro">PagSeguro</option>
+            </select>
+          </div>
+        </div>
+        <!-- Resultado do cálculo -->
+        <div id="av-resultado" style="display:none;background:#1e1e1e;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div>
+              <div class="mlabel">Taxa</div>
+              <div style="font-size:15px;font-weight:600;color:#ff9444" id="av-taxa">—</div>
+            </div>
+            <div>
+              <div class="mlabel">Valor cobrado</div>
+              <div style="font-size:15px;font-weight:600;color:#ccc" id="av-cobrado">—</div>
+            </div>
+            <div>
+              <div class="mlabel">Valor líquido</div>
+              <div style="font-size:16px;font-weight:700;color:#1E9E5E" id="av-liquido">—</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-green" onclick="adminRegistrarVenda()">✅ Registrar Venda</button>
+        <div class="success-msg" id="msg-av">✓ Venda registrada com sucesso!</div>
+      </div>
+
       <div class="admin-card">
         <h3><span>💰</span> Painel de Vendas</h3>
         <div class="vendas-filter">
@@ -1041,7 +1105,7 @@ function switchAdminTab(id) {
   });
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='tab-vendas') { filtroVendas='hoje'; ['hoje','semana','mes','tudo'].forEach(f=>{ const el=document.getElementById('vfbtn-'+f); if(el) el.className='vf-btn'+(f===filtroVendas?' active':''); }); renderVendasAdmin(); }
+  if(id==='tab-vendas') { filtroVendas='hoje'; ['hoje','semana','mes','tudo'].forEach(f=>{ const el=document.getElementById('vfbtn-'+f); if(el) el.className='vf-btn'+(f===filtroVendas?' active':''); }); renderVendasAdmin(); carregarUsuariosSelect(); }
 }
 
 // Sub-abas dentro da aba Taxas
@@ -1506,6 +1570,138 @@ async function saveCusto(tipo) {
     const msg = document.getElementById('msg-custo-' + tipo);
     if (msg) { msg.style.display='block'; setTimeout(()=>msg.style.display='none',3000); }
   } catch(e) { alert('Erro ao salvar custos: '+e.message); }
+}
+
+// ── REGISTRAR VENDA PELO ADMIN ──
+let adminUsersCache = [];
+
+async function carregarUsuariosSelect() {
+  try {
+    const users = await api('GET', '/api/usuarios');
+    adminUsersCache = users.filter(u => !u.is_admin);
+    const sel = document.getElementById('av-usuario');
+    if(!sel) return;
+    sel.innerHTML = '';
+    adminUsersCache.forEach(u => {
+      sel.innerHTML += `<option value="${u.id}" data-perfil="${u.perfil}" data-maq="${u.maquina_tipo||'stone'}">${u.nome}</option>`;
+    });
+    atualizarSelectsAdminVenda();
+  } catch(e) { console.warn('Erro ao carregar usuários:', e); }
+}
+
+function atualizarSelectsAdminVenda() {
+  const sel = document.getElementById('av-usuario');
+  if(!sel || !sel.options.length) return;
+  const opt = sel.options[sel.selectedIndex];
+  const perfil = opt?.dataset?.perfil || 'alto';
+  const maqTipo = opt?.dataset?.maq || 'stone';
+
+  // Atualiza parcelas conforme perfil do usuário
+  const rows = TAXAS[perfil === 'baixo' ? 'baixo' : 'alto'];
+  const parcelaSel = document.getElementById('av-parcela');
+  if(parcelaSel) {
+    parcelaSel.innerHTML = '';
+    rows.forEach(r => {
+      parcelaSel.innerHTML += `<option value="${r.label}">${r.label}</option>`;
+    });
+  }
+
+  // Atualiza maquina conforme usuário
+  const maqSel = document.getElementById('av-maquina');
+  if(maqSel) {
+    if(maqTipo === 'ambas') {
+      maqSel.innerHTML = '<option value="stone">Stone</option><option value="pagseguro">PagSeguro</option>';
+    } else {
+      maqSel.innerHTML = `<option value="${maqTipo}">${maqTipo==='stone'?'Stone':'PagSeguro'}</option>`;
+    }
+  }
+  calcAdminVenda();
+}
+
+function calcAdminVenda() {
+  const sel = document.getElementById('av-usuario');
+  if(!sel || !sel.options.length) return;
+  const opt = sel.options[sel.selectedIndex];
+  const perfil = opt?.dataset?.perfil || 'alto';
+  const tipoValorAV = document.getElementById('av-tipo-valor')?.value || 'receber';
+  const valor = parseFloat(document.getElementById('av-valor')?.value) || 0;
+  const parcelaLabel = document.getElementById('av-parcela')?.value;
+  const bandeira = document.getElementById('av-bandeira')?.value || 'vm';
+
+  if(!valor || !parcelaLabel) {
+    document.getElementById('av-resultado').style.display = 'none';
+    return;
+  }
+
+  const rows = TAXAS[perfil === 'baixo' ? 'baixo' : 'alto'];
+  const t = rows.find(r => r.label === parcelaLabel) || rows[1];
+  const taxa = bandeira === 'vm' ? t.vm : t.ea;
+
+  let valorCobrado, valorLiquido, desconto;
+  if(tipoValorAV === 'receber') {
+    valorCobrado = valor / (1 - taxa/100);
+    valorLiquido = valor;
+    desconto = valorCobrado - valor;
+  } else {
+    desconto = valor * taxa / 100;
+    valorCobrado = valor;
+    valorLiquido = valor - desconto;
+  }
+
+  document.getElementById('av-taxa').textContent = fmtPct(taxa);
+  document.getElementById('av-cobrado').textContent = 'R$ ' + fmt(valorCobrado);
+  document.getElementById('av-liquido').textContent = 'R$ ' + fmt(valorLiquido);
+  document.getElementById('av-resultado').style.display = 'block';
+}
+
+async function adminRegistrarVenda() {
+  const sel = document.getElementById('av-usuario');
+  if(!sel || !sel.options.length) return;
+  const opt = sel.options[sel.selectedIndex];
+  const userId = opt.value;
+  const perfil = opt.dataset.perfil || 'alto';
+  const tipoValorAV = document.getElementById('av-tipo-valor')?.value || 'receber';
+  const valor = parseFloat(document.getElementById('av-valor')?.value) || 0;
+  const parcelaLabel = document.getElementById('av-parcela')?.value;
+  const bandeira = document.getElementById('av-bandeira')?.value || 'vm';
+  const maquina = document.getElementById('av-maquina')?.value || 'stone';
+
+  if(!valor) { alert('Digite o valor da venda.'); return; }
+
+  const rows = TAXAS[perfil === 'baixo' ? 'baixo' : 'alto'];
+  const t = rows.find(r => r.label === parcelaLabel) || rows[1];
+  const taxa = bandeira === 'vm' ? t.vm : t.ea;
+
+  let valorCobrado, valorLiquido, desconto;
+  if(tipoValorAV === 'receber') {
+    valorCobrado = valor / (1 - taxa/100);
+    valorLiquido = valor;
+    desconto = valorCobrado - valor;
+  } else {
+    desconto = valor * taxa / 100;
+    valorCobrado = valor;
+    valorLiquido = valor - desconto;
+  }
+
+  try {
+    await api('POST', '/api/vendas/admin', {
+      usuario_id: userId,
+      valor_bruto: valorCobrado,
+      taxa, desconto,
+      liquido: valorLiquido,
+      parcela: parcelaLabel,
+      bandeira: bandeira === 'vm' ? 'Visa/Master' : 'Elo/Amex',
+      perfil: perfil === 'baixo' ? 'baixo' : 'alto',
+      maquina_tipo: maquina,
+    });
+    document.getElementById('av-valor').value = '';
+    document.getElementById('av-resultado').style.display = 'none';
+    const msg = document.getElementById('msg-av');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+    renderVendasAdmin();
+    renderUsersTable();
+  } catch(e) { alert('Erro ao registrar: ' + e.message); }
 }
 
 // ── HISTÓRICO DO USUÁRIO ──

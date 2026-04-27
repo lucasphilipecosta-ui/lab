@@ -459,8 +459,7 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
   <div class="admin-body">
     <div class="admin-tabs">
       <div class="admin-tab active" onclick="switchAdminTab('tab-users')">👥 Usuários</div>
-      <div class="admin-tab" onclick="switchAdminTab('tab-taxas-alto')">📈 Taxas – Fat. A</div>
-      <div class="admin-tab" onclick="switchAdminTab('tab-taxas-baixo')">📉 Taxas – Fat. B</div>
+      <div class="admin-tab" onclick="switchAdminTab('tab-taxas')">📊 Taxas</div>
       <div class="admin-tab" onclick="switchAdminTab('tab-vendas')">💰 Vendas</div>
     </div>
 
@@ -508,58 +507,56 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
       </div>
     </div>
 
-    <!-- TAXAS ALTO -->
-    <div id="tab-taxas-alto" class="admin-section">
-      <!-- TAXAS COBRADAS -->
-      <div class="admin-card">
-        <h3><span>📈</span> Taxas Cobradas – Faturamento A</h3>
-        <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes. Edite e clique em Salvar.</p>
-        <div id="taxa-grid-alto" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
-        <br><button class="btn-green" onclick="saveTaxas('alto')">💾 Salvar Taxas – Alto</button>
-        <div class="success-msg" id="msg-alto">✓ Taxas salvas!</div>
-      </div>
-      <!-- CUSTO STONE -->
-      <div class="admin-card">
-        <h3><span>🟢</span> Custo Stone – Visa/Master (Promocional)</h3>
-        <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que a Stone cobra de você. Edite se as taxas mudarem.</p>
-        <div id="custo-grid-stone" class="taxa-grid"></div>
-        <br><button class="btn-green" onclick="saveCusto('stone')">💾 Salvar Custo Stone</button>
-        <div class="success-msg" id="msg-custo-stone">✓ Custo Stone salvo!</div>
-      </div>
-      <!-- CUSTO PAGSEGURO -->
-      <div class="admin-card">
-        <h3><span>🟠</span> Custo PagSeguro – Visa/Master</h3>
-        <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que o PagSeguro cobra de você. Edite se as taxas mudarem.</p>
-        <div id="custo-grid-pagseguro" class="taxa-grid"></div>
-        <br><button class="btn-green" onclick="saveCusto('pagseguro')">💾 Salvar Custo PagSeguro</button>
-        <div class="success-msg" id="msg-custo-pagseguro">✓ Custo PagSeguro salvo!</div>
-      </div>
-    </div>
+    <!-- TAXAS (Fat. A + Fat. B unificadas) -->
+    <div id="tab-taxas" class="admin-section">
 
-    <!-- TAXAS BAIXO -->
-    <div id="tab-taxas-baixo" class="admin-section">
-      <!-- TAXAS COBRADAS -->
-      <div class="admin-card">
-        <h3><span>📉</span> Taxas Cobradas – Faturamento B</h3>
-        <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes. Edite e clique em Salvar.</p>
-        <div id="taxa-grid-baixo" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
-        <br><button class="btn-green" onclick="saveTaxas('baixo')">💾 Salvar Taxas – Baixo</button>
-        <div class="success-msg" id="msg-baixo">✓ Taxas salvas!</div>
+      <!-- SUB-ABAS INTERNAS -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="vf-btn active" id="stab-a" onclick="setSubTab('a')">📈 Faturamento A</button>
+        <button class="vf-btn" id="stab-b" onclick="setSubTab('b')">📉 Faturamento B</button>
+        <button class="vf-btn" id="stab-custo" onclick="setSubTab('custo')">💰 Custos das Máquinas</button>
       </div>
-      <!-- CUSTO STONE BAIXO (mesmas taxas Stone) -->
-      <div class="admin-card">
-        <h3><span>🟢</span> Custo Stone – Visa/Master (Promocional)</h3>
-        <p style="font-size:12px;color:#555;margin-bottom:16px">Mesmo custo Stone para ambos os perfis de faturamento.</p>
-        <div id="custo-grid-stone-baixo" class="taxa-grid"></div>
-        <p style="font-size:11px;color:#444;margin-top:10px">* Edite na aba Fat. A e salve — as taxas de custo são as mesmas para ambos os perfis.</p>
+
+      <!-- SUB-ABA: FAT. A -->
+      <div id="subtab-a">
+        <div class="admin-card">
+          <h3><span>📈</span> Taxas Cobradas – Faturamento A</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento A.</p>
+          <div id="taxa-grid-alto" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
+          <br><button class="btn-green" onclick="saveTaxas('alto')">💾 Salvar Taxas – Fat. A</button>
+          <div class="success-msg" id="msg-alto">✓ Taxas salvas!</div>
+        </div>
       </div>
-      <!-- CUSTO PAGSEGURO BAIXO -->
-      <div class="admin-card">
-        <h3><span>🟠</span> Custo PagSeguro – Visa/Master</h3>
-        <p style="font-size:12px;color:#555;margin-bottom:16px">Mesmo custo PagSeguro para ambos os perfis de faturamento.</p>
-        <div id="custo-grid-pagseguro-baixo" class="taxa-grid"></div>
-        <p style="font-size:11px;color:#444;margin-top:10px">* Edite na aba Fat. A e salve — as taxas de custo são as mesmas para ambos os perfis.</p>
+
+      <!-- SUB-ABA: FAT. B -->
+      <div id="subtab-b" style="display:none">
+        <div class="admin-card">
+          <h3><span>📉</span> Taxas Cobradas – Faturamento B</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento B.</p>
+          <div id="taxa-grid-baixo" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
+          <br><button class="btn-green" onclick="saveTaxas('baixo')">💾 Salvar Taxas – Fat. B</button>
+          <div class="success-msg" id="msg-baixo">✓ Taxas salvas!</div>
+        </div>
       </div>
+
+      <!-- SUB-ABA: CUSTOS -->
+      <div id="subtab-custo" style="display:none">
+        <div class="admin-card">
+          <h3><span>🟢</span> Custo Stone – Visa/Master (Promocional)</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que a Stone cobra de você. Edite se as taxas mudarem.</p>
+          <div id="custo-grid-stone" class="taxa-grid"></div>
+          <br><button class="btn-green" onclick="saveCusto('stone')">💾 Salvar Custo Stone</button>
+          <div class="success-msg" id="msg-custo-stone">✓ Custo Stone salvo!</div>
+        </div>
+        <div class="admin-card">
+          <h3><span>🟠</span> Custo PagSeguro – Visa/Master</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que o PagSeguro cobra de você. Edite se as taxas mudarem.</p>
+          <div id="custo-grid-pagseguro" class="taxa-grid"></div>
+          <br><button class="btn-green" onclick="saveCusto('pagseguro')">💾 Salvar Custo PagSeguro</button>
+          <div class="success-msg" id="msg-custo-pagseguro">✓ Custo PagSeguro salvo!</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- VENDAS -->
@@ -979,12 +976,21 @@ async function registrarVenda() {
 // ═══════════════════════════════════════════
 function switchAdminTab(id) {
   document.querySelectorAll('.admin-tab').forEach((t,i)=>{
-    const ids=['tab-users','tab-taxas-alto','tab-taxas-baixo','tab-vendas'];
+    const ids=['tab-users','tab-taxas','tab-vendas'];
     t.className='admin-tab'+(ids[i]===id?' active':'');
   });
   document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='tab-vendas') { filtroVendas='hoje'; ['hoje','semana','mes','tudo'].forEach(f=>{ const el=document.getElementById('vfbtn-'+f); if(el) el.className='vf-btn'+(f===filtroVendas?' active':''); }); renderVendasAdmin(); }
+}
+
+// Sub-abas dentro da aba Taxas
+function setSubTab(t) {
+  ['a','b','custo'].forEach(x => {
+    document.getElementById('subtab-'+x).style.display = x===t?'block':'none';
+    const btn = document.getElementById('stab-'+x);
+    if(btn) btn.className = 'vf-btn'+(x===t?' active':'');
+  });
 }
 
 async function buildAdminUI() {
@@ -995,8 +1001,6 @@ async function buildAdminUI() {
   ]);
   buildCustoGrid('stone');
   buildCustoGrid('pagseguro');
-  buildCustoGridReadonly('stone', 'custo-grid-stone-baixo');
-  buildCustoGridReadonly('pagseguro', 'custo-grid-pagseguro-baixo');
 }
 
 // ── USUÁRIOS ──

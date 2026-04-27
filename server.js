@@ -58,6 +58,7 @@ async function initDB() {
         parcela      VARCHAR(10)   NOT NULL,
         bandeira     VARCHAR(30)   NOT NULL,
         perfil       VARCHAR(10)   NOT NULL,
+        maquina_tipo VARCHAR(30)   DEFAULT 'stone',
         criado_em    DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -89,6 +90,10 @@ async function initDB() {
     try {
       await conn.query("ALTER TABLE usuarios ADD COLUMN maquina_tipo VARCHAR(50) DEFAULT 'stone'");
       console.log('✓ Coluna maquina_tipo adicionada');
+    } catch(e) { /* coluna ja existe */ }
+    try {
+      await conn.query("ALTER TABLE vendas ADD COLUMN maquina_tipo VARCHAR(30) DEFAULT 'stone'");
+      console.log('✓ Coluna maquina_tipo adicionada em vendas');
     } catch(e) { /* coluna ja existe */ }
 
     console.log('✓ Tabelas verificadas/criadas');
@@ -393,10 +398,13 @@ function wherePeriodo(periodo, alias='v') {
 
 app.post('/api/vendas', authMiddleware, async (req, res) => {
   try {
-    const { valor_bruto, taxa, desconto, liquido, parcela, bandeira, perfil } = req.body;
+    const { valor_bruto, taxa, desconto, liquido, parcela, bandeira, perfil, maquina_tipo } = req.body;
+    // Busca maquina_tipo do usuario se nao vier no body
+    const [uRows] = await pool.query('SELECT maquina_tipo FROM usuarios WHERE id=?', [req.user.id]);
+    const maqTipoFinal = maquina_tipo || (uRows[0]?.maquina_tipo) || 'stone';
     const [r] = await pool.query(
-      'INSERT INTO vendas (usuario_id,valor_bruto,taxa,desconto,liquido,parcela,bandeira,perfil) VALUES (?,?,?,?,?,?,?,?)',
-      [req.user.id, valor_bruto, taxa, desconto, liquido, parcela, bandeira, perfil]
+      'INSERT INTO vendas (usuario_id,valor_bruto,taxa,desconto,liquido,parcela,bandeira,perfil,maquina_tipo) VALUES (?,?,?,?,?,?,?,?,?)',
+      [req.user.id, valor_bruto, taxa, desconto, liquido, parcela, bandeira, perfil, maqTipoFinal]
     );
     res.json({ id: r.insertId, ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }

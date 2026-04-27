@@ -453,6 +453,19 @@ app.delete('/api/vendas/usuario/:id', authMiddleware, adminOnly, async (req, res
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// POST /api/vendas/admin — admin registra venda para outro usuário
+app.post('/api/vendas/admin', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { usuario_id, valor_bruto, taxa, desconto, liquido, parcela, bandeira, perfil, maquina_tipo } = req.body;
+    if (!usuario_id || !valor_bruto) return res.status(400).json({ error: 'Dados inválidos' });
+    const [r] = await pool.query(
+      'INSERT INTO vendas (usuario_id,valor_bruto,taxa,desconto,liquido,parcela,bandeira,perfil,maquina_tipo) VALUES (?,?,?,?,?,?,?,?,?)',
+      [usuario_id, valor_bruto, taxa, desconto, liquido, parcela, bandeira, perfil || 'alto', maquina_tipo || 'stone']
+    );
+    res.json({ id: r.insertId, ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET /api/vendas/minha — vendas do usuário logado
 app.get('/api/vendas/minha', authMiddleware, async (req, res) => {
   try {

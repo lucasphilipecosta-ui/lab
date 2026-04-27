@@ -514,13 +514,13 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
       <div class="admin-card">
         <h3><span>👥</span> Usuários Cadastrados</h3>
         <div class="table-wrap" style="overflow-x:auto"><table class="atable">
-          <thead><tr><th>Usuário</th><th>Maquininha</th><th>Tipo</th><th>Nº Série</th><th>Acesso</th><th>💰 Vendas</th><th>📈 Lucro LAB</th><th>Senha</th><th>Ações</th></tr></thead>
-          <tbody id="users-table"><tr><td colspan="8" class="loading"><span class="spinner"></span>Carregando...</td></tr></tbody>
+          <thead><tr><th>Usuário</th><th>Tipo</th><th>Nº Série</th><th>Acesso</th><th>💰 Total Bruto</th><th>💵 Lucro Líquido</th><th>📈 Lucro LAB</th><th>Senha</th><th>Ações</th></tr></thead>
+          <tbody id="users-table"><tr><td colspan="9" class="loading"><span class="spinner"></span>Carregando...</td></tr></tbody>
         </table></div>
       </div>
     </div>
 
-    <!-- TAXAS (Fat. Goldlack + Fat. Gold unificadas) -->
+    <!-- TAXAS (Fat. Black + Fat. Gold unificadas) -->
     <div id="tab-taxas" class="admin-section">
 
       <!-- SUB-ABAS INTERNAS -->
@@ -536,7 +536,7 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
           <h3><span>📈</span> Taxas Cobradas – Faturamento Black</h3>
           <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que você cobra dos seus clientes no Faturamento Black.</p>
           <div id="taxa-grid-alto" class="taxa-grid"><div class="loading"><span class="spinner"></span>Carregando...</div></div>
-          <br><button class="btn-green" onclick="saveTaxas('alto')">💾 Salvar Taxas – Fat. Goldlack</button>
+          <br><button class="btn-green" onclick="saveTaxas('alto')">💾 Salvar Taxas – Fat. Black</button>
           <div class="success-msg" id="msg-alto">✓ Taxas salvas!</div>
         </div>
       </div>
@@ -1071,7 +1071,7 @@ async function renderUsersTable() {
     tbody.innerHTML='';
     users.forEach(u => {
       const badgeClass=u.perfil==='alto'?'badge-alto':u.perfil==='baixo'?'badge-baixo':'badge-ambos';
-      const badgeLabel=u.perfil==='alto'?'Fat. Goldlack':u.perfil==='baixo'?'Fat. Gold':'Ambos';
+      const badgeLabel=u.perfil==='alto'?'Fat. Black':u.perfil==='baixo'?'Fat. Gold':'Ambos';
       const adminTag = u.is_admin?'<span style="font-size:10px;color:#ffc400;margin-left:4px">★</span>':'';
       const delBtn = u.is_admin?'':'<button class="btn-red btn-sm" onclick="deleteUser('+u.id+')">Excluir</button>';
       const vStr = u.qtd_vendas>0
@@ -1086,19 +1086,55 @@ async function renderUsersTable() {
         : maqTipo==='pagseguro'
         ? '<span style="background:rgba(255,149,0,.12);color:#ff9500;border:1px solid rgba(255,149,0,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">PagSeguro</span>'
         : '<span style="background:rgba(87,153,255,.12);color:#5799ff;border:1px solid rgba(87,153,255,.25);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">Ambas</span>';
+      // Calcula Lucro LAB para este usuário (vendas × diferença taxa-custo)
+      const vendasU = [];
+      let lucroLabU = 0;
+      // Lucro LAB = total_vendas × (taxa_cobrada - custo_maquina) / 100
+      // Usamos total_taxas (valor descontado) - custo estimado
+      if(u.qtd_vendas > 0) {
+        const taxaMedia = (parseFloat(u.total_taxas)||0) / (parseFloat(u.total_vendas)||1) * 100;
+        const custoMaq = maqTipo === 'ambas'
+          ? ((CUSTOS.stone.vm['1x']||0) + (CUSTOS.pagseguro.vm['1x']||0)) / 2
+          : (CUSTOS[maqTipo]?.vm?.['1x'] || 0);
+        // Lucro LAB = total_taxas - (total_vendas × custo%) 
+        // Mas precisamos das vendas individuais — vamos buscar async
+      }
+      const lucroLabStr = '<span style="color:#ffc400;font-weight:600" id="lucrolab-'+u.id+'">...</span>';
+
       tbody.innerHTML+=`<tr>
         <td><strong style="color:#fff">${u.nome}</strong>${adminTag}</td>
-        <td><span style="color:#ccc;font-size:12px">${u.maquina_modelo||'<span style="color:#333">—</span>'}</span></td>
         <td>${maqBadge}</td>
         <td><span style="color:#888;font-size:11px;font-family:monospace">${u.maquina_serie||'<span style="color:#333">—</span>'}</span></td>
         <td><span class="${badgeClass}">${badgeLabel}</span></td>
-        <td>${vStr}</td><td>${lStr}</td>
+        <td>${vStr}</td>
+        <td>${lStr}</td>
+        <td>${lucroLabStr}</td>
         <td><span style="color:#444;font-size:11px">••••••••</span></td>
         <td><button class="btn-edit btn-sm" onclick="openEditModal(${u.id},'${u.nome}','${u.perfil}','${u.maquina_modelo||''}','${u.maquina_serie||''}','${maqTipo}')">Editar</button>${delBtn}</td>
       </tr>`;
     });
+    // Calcula LucroLAB para cada usuário com vendas
+    const vendas = await api('GET', '/api/vendas?periodo=tudo').catch(()=>[]);
+    const vendasPorUser = {};
+    vendas.forEach(v => {
+      if(!vendasPorUser[v.usuario_id]) vendasPorUser[v.usuario_id]=[];
+      vendasPorUser[v.usuario_id].push(v);
+    });
+    users.forEach(u => {
+      const el = document.getElementById('lucrolab-'+u.id);
+      if(!el) return;
+      const maqTipoU = u.maquina_tipo||'stone';
+      const vendasU = vendasPorUser[u.id]||[];
+      let lucroLab = 0;
+      vendasU.forEach(v => {
+        const custo = calcLucroLab(v.taxa, v.parcela, v.maquina_tipo||maqTipoU, v.bandeira);
+        if(custo !== null) lucroLab += (parseFloat(v.valor_bruto)||0) * (custo/100);
+      });
+      el.textContent = vendasU.length > 0 ? 'R$ '+fmt(lucroLab) : '—';
+      if(vendasU.length === 0) el.style.color = '#333';
+    });
   } catch(e) {
-    tbody.innerHTML=`<tr><td colspan="8" style="color:#ff5c5c;text-align:center;padding:20px">${e.message}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="color:#ff5c5c;text-align:center;padding:20px">${e.message}</td></tr>`;
   }
 }
 

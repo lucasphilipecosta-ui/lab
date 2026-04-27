@@ -542,14 +542,14 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
       <!-- SUB-ABA: CUSTOS -->
       <div id="subtab-custo" style="display:none">
         <div class="admin-card">
-          <h3><span>🟢</span> Custos Stone</h3>
+          <h3><span>🟢</span> Custo Stone – Visa/Master (Promocional)</h3>
           <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que a Stone cobra de você. Edite se as taxas mudarem.</p>
           <div id="custo-grid-stone" class="taxa-grid"></div>
           <br><button class="btn-green" onclick="saveCusto('stone')">💾 Salvar Custo Stone</button>
           <div class="success-msg" id="msg-custo-stone">✓ Custo Stone salvo!</div>
         </div>
         <div class="admin-card">
-          <h3><span>🟠</span> Custos PagSeguro</h3>
+          <h3><span>🟠</span> Custo PagSeguro – Visa/Master</h3>
           <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que o PagSeguro cobra de você. Edite se as taxas mudarem.</p>
           <div id="custo-grid-pagseguro" class="taxa-grid"></div>
           <br><button class="btn-green" onclick="saveCusto('pagseguro')">💾 Salvar Custo PagSeguro</button>
@@ -780,7 +780,7 @@ async function doLogin() {
 }
 
 async function afterLogin() {
-  perfil     = currentUser.perfil === 'ambos' || currentUser.perfil === 'alto' ? 'alto' : 'baixo';
+  perfil     = (currentUser.is_admin || currentUser.perfil === 'ambos' || currentUser.perfil === 'alto') ? 'alto' : 'baixo';
   parcelaSel = '1x';
   modoVenda  = 'venda'; bandeiraSel = 'vm';
   // carrega taxas e custos
@@ -841,11 +841,21 @@ async function buildCalcUI() {
   document.getElementById('topbar-badge').textContent = '';
   document.getElementById('btn-admin-link').style.display = u.is_admin ? 'inline-block' : 'none';
 
-  // Perfil definido pelo admin — não exibe seleção para o usuário
-  if (u.perfil !== 'ambos') {
-    perfil = u.perfil;
+  const wrap = document.getElementById('perfil-tabs-wrap');
+
+  if (u.is_admin) {
+    // Admin vê os dois perfis e pode alternar
+    wrap.style.display = 'block';
+    wrap.innerHTML = `<div class="perfil-tabs" style="margin-bottom:20px">
+      <div class="tab ${perfil==='alto'?'active':''}" id="tab-alto" onclick="setPerfil('alto')">Faturamento A</div>
+      <div class="tab ${perfil==='baixo'?'active':''}" id="tab-baixo" onclick="setPerfil('baixo')">Faturamento B</div>
+    </div>`;
+  } else {
+    // Usuário normal — perfil fixo definido pelo admin
+    wrap.style.display = 'none';
+    if (u.perfil !== 'ambos') perfil = u.perfil;
   }
-  // wrap oculto — admin define o perfil
+
   renderBotoes(); calcular();
   // Inicializa histórico do usuário
   filtroHist = 'hoje';

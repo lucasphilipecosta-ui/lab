@@ -555,15 +555,15 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
       <!-- SUB-ABA: CUSTOS -->
       <div id="subtab-custo" style="display:none">
         <div class="admin-card">
-          <h3><span>🟢</span> Custo Stone – Visa/Master (Promocional)</h3>
-          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que a Stone cobra de você. Edite se as taxas mudarem.</p>
+          <h3><span>🟢</span> Custo Stone</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Edite as taxas que a Stone cobra de você.</p>
           <div id="custo-grid-stone" class="taxa-grid"></div>
           <br><button class="btn-green" onclick="saveCusto('stone')">💾 Salvar Custo Stone</button>
           <div class="success-msg" id="msg-custo-stone">✓ Custo Stone salvo!</div>
         </div>
         <div class="admin-card">
-          <h3><span>🟠</span> Custo PagSeguro – Visa/Master</h3>
-          <p style="font-size:12px;color:#555;margin-bottom:16px">Taxas que o PagSeguro cobra de você. Edite se as taxas mudarem.</p>
+          <h3><span>🟠</span> Custo PagSeguro</h3>
+          <p style="font-size:12px;color:#555;margin-bottom:16px">Edite as taxas que o PagSeguro cobra de você.</p>
           <div id="custo-grid-pagseguro" class="taxa-grid"></div>
           <br><button class="btn-green" onclick="saveCusto('pagseguro')">💾 Salvar Custo PagSeguro</button>
           <div class="success-msg" id="msg-custo-pagseguro">✓ Custo PagSeguro salvo!</div>
@@ -654,7 +654,7 @@ hr{border:none;border-top:1px solid #222;margin:20px 0}
           <div class="vt-mini" style="border-color:rgba(255,196,0,.3)"><div class="vt-mini-label" style="color:#ffc400">💰 Lucro LAB</div><div class="vt-mini-value" style="color:#ffc400" id="vt-lucrolab">—</div><div class="vt-mini-sub">Taxa cobrada − custo</div></div>
         </div>
         <div class="table-wrap" style="overflow-x:auto"><table class="atable">
-          <thead><tr><th>Usuário</th><th>Maquininha</th><th>Bruto</th><th>💰 Lucro</th><th>Taxas</th><th>💰 Lucro LAB</th><th>Qtd</th><th>Última venda</th><th>Detalhes</th><th>Ações</th></tr></thead>
+          <thead><tr><th>Usuário</th><th>Maquininha</th><th>Bruto</th><th>💰 Lucro</th><th>Taxas</th><th>💰 Lucro LAB</th><th>Qtd</th><th>Última venda</th><th>Detalhes</th></tr></thead>
           <tbody id="vendas-resumo-table"><tr><td colspan="8" class="loading"><span class="spinner"></span>Carregando...</td></tr></tbody>
         </table></div>
       </div>
@@ -1380,7 +1380,6 @@ async function renderVendasAdmin() {
         <td>${u.qtd}</td>
         <td style="font-size:11px;color:#555">${ultima}</td>
         <td><button class="btn-edit btn-sm" onclick="abrirDetalhamento(${u.id},'${u.nome}','${u.maquina_modelo||''}','${maqTipo}')">Ver detalhes</button></td>
-        <td><button class="btn-red btn-sm" onclick="limparVendasUser(${u.id},'${u.nome}')">Zerar</button></td>
       </tr>`;
     });
     document.getElementById('vt-total').textContent='R$ '+fmt(tBruto);

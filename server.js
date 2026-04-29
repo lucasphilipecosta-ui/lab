@@ -96,6 +96,20 @@ async function initDB() {
       console.log('✓ Coluna maquina_tipo adicionada em vendas');
     } catch(e) { /* coluna ja existe */ }
 
+    // Adiciona parcelas 13x-18x se não existirem
+    const novasParcelas = ['13x','14x','15x','16x','17x','18x'];
+    for (const label of novasParcelas) {
+      await conn.query('INSERT IGNORE INTO taxas (perfil,label,vm,ea) VALUES (?,?,0,0)', ['baixo', label]);
+      await conn.query('INSERT IGNORE INTO taxas (perfil,label,vm,ea) VALUES (?,?,0,0)', ['alto',  label]);
+      await conn.query('INSERT IGNORE INTO custos (maquina,label,vm,ea) VALUES (?,?,0,0)', ['stone',     label]);
+      // PagSeguro VM já tem valores
+      const pагVM = {
+        '13x':11.64,'14x':12.23,'15x':12.81,'16x':13.39,'17x':13.96,'18x':14.53
+      };
+      await conn.query('INSERT IGNORE INTO custos (maquina,label,vm,ea) VALUES (?,?,?,0)', ['pagseguro', label, pагVM[label]||0]);
+    }
+    console.log('✓ Parcelas 13x-18x verificadas');
+
     console.log('✓ Tabelas verificadas/criadas');
     await seedUsuarios(conn);
     await seedTaxas(conn);
@@ -152,6 +166,12 @@ async function seedCustos(conn) {
     {label:'10x',    vm:8.80, ea:9.22},
     {label:'11x',    vm:9.39, ea:9.80},
     {label:'12x',    vm:9.98, ea:10.38},
+    {label:'13x',    vm:0,    ea:0},
+    {label:'14x',    vm:0,    ea:0},
+    {label:'15x',    vm:0,    ea:0},
+    {label:'16x',    vm:0,    ea:0},
+    {label:'17x',    vm:0,    ea:0},
+    {label:'18x',    vm:0,    ea:0},
   ];
   const pagseguro = [
     {label:'Débito', vm:0.99, ea:0},
@@ -167,6 +187,12 @@ async function seedCustos(conn) {
     {label:'10x',    vm:9.05, ea:10.68},
     {label:'11x',    vm:9.65, ea:11.29},
     {label:'12x',    vm:10.25,ea:11.88},
+    {label:'13x',    vm:11.64,ea:0},
+    {label:'14x',    vm:12.23,ea:0},
+    {label:'15x',    vm:12.81,ea:0},
+    {label:'16x',    vm:13.39,ea:0},
+    {label:'17x',    vm:13.96,ea:0},
+    {label:'18x',    vm:14.53,ea:0},
   ];
 
   for (const t of stone)
@@ -195,6 +221,12 @@ async function seedTaxas(conn) {
     {label:'10x',    vm:14.11,ea:14.76},
     {label:'11x',    vm:14.46,ea:15.02},
     {label:'12x',    vm:15.35,ea:16.96},
+    {label:'13x',    vm:0,    ea:0},
+    {label:'14x',    vm:0,    ea:0},
+    {label:'15x',    vm:0,    ea:0},
+    {label:'16x',    vm:0,    ea:0},
+    {label:'17x',    vm:0,    ea:0},
+    {label:'18x',    vm:0,    ea:0},
   ];
   const taxasAlto = [
     {label:'Débito', vm:2.40, ea:2.39},
@@ -210,6 +242,12 @@ async function seedTaxas(conn) {
     {label:'10x',    vm:10.11,ea:10.76},
     {label:'11x',    vm:10.46,ea:11.02},
     {label:'12x',    vm:11.35,ea:11.96},
+    {label:'13x',    vm:0,    ea:0},
+    {label:'14x',    vm:0,    ea:0},
+    {label:'15x',    vm:0,    ea:0},
+    {label:'16x',    vm:0,    ea:0},
+    {label:'17x',    vm:0,    ea:0},
+    {label:'18x',    vm:0,    ea:0},
   ];
 
   for (const t of taxasBaixo)

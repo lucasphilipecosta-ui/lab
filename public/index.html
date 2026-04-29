@@ -1516,9 +1516,9 @@ async function renderDetalhamento() {
     const vendas = await api('GET','/api/vendas?periodo='+detFiltroPeriodo);
     const minhas = vendas.filter(v=>v.usuario_id===detKey);
     const u = resumo.find(r=>r.id===detKey)||{total_bruto:0,total_lucro:0,total_taxas:0,qtd:0};
-    document.getElementById('det-bruto').textContent='R$ '+fmt(minhas.reduce((s,v)=>s+v.valor_bruto,0));
-    document.getElementById('det-lucro').textContent='R$ '+fmt(minhas.reduce((s,v)=>s+v.liquido,0));
-    document.getElementById('det-taxas').textContent='R$ '+fmt(minhas.reduce((s,v)=>s+v.desconto,0));
+    document.getElementById('det-bruto').textContent='R$ '+fmt(minhas.reduce((s,v)=>s+(parseFloat(v.valor_bruto)||0),0));
+    document.getElementById('det-lucro').textContent='R$ '+fmt(minhas.reduce((s,v)=>s+(parseFloat(v.liquido)||0),0));
+    document.getElementById('det-taxas').textContent='R$ '+fmt(minhas.reduce((s,v)=>s+(parseFloat(v.desconto)||0),0));
     document.getElementById('det-qtd').textContent=minhas.length+(minhas.length===1?' transação':' transações');
     tbody.innerHTML='';
     if(minhas.length===0) {

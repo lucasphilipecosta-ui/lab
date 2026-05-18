@@ -508,7 +508,6 @@ app.post('/api/vendas/admin', authMiddleware, adminOnly, async (req, res) => {
 app.get('/api/vendas/minha', authMiddleware, async (req, res) => {
   try {
     const w = wherePeriodo(req.query.periodo);
-    const colBR = `CONVERT_TZ(v.criado_em, '+00:00', '-03:00')`;
     const [rows] = await pool.query(`
       SELECT * FROM vendas v
       WHERE usuario_id = ? ${w}
@@ -532,8 +531,6 @@ app.delete('/api/vendas/:id', authMiddleware, async (req, res) => {
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
-
-
 
 // GET /api/custos/:maquina
 app.get('/api/custos/:maquina', authMiddleware, async (req, res) => {
@@ -559,6 +556,51 @@ app.put('/api/custos/:maquina', authMiddleware, adminOnly, async (req, res) => {
     }
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ═══════════════════════════════════════════
+//  ROTA TEMPORÁRIA — EXPORTAR BANCO
+//  ⚠️ REMOVER APÓS MIGRAÇÃO CONCLUÍDA ⚠️
+// ═══════════════════════════════════════════
+app.get('/api/exportar-banco-temp-2026', async (req, res) => {
+  try {
+    const tabelas = ['usuarios', 'taxas', 'custos', 'vendas'];
+    let sql = '-- Exportação LAB Calculadora\n';
+    sql += '-- Gerado em: ' + new Date().toISOString() + '\n\n';
+    sql += 'SET FOREIGN_KEY_CHECKS=0;\n\n';
+
+    for (const tabela of tabelas) {
+      const [rows] = await pool.query(`SELECT * FROM \`${tabela}\``);
+      sql += `-- ----------------------------------------\n`;
+      sql += `-- Tabela: ${tabela} (${rows.length} registros)\n`;
+      sql += `-- ----------------------------------------\n`;
+
+      if (rows.length === 0) {
+        sql += `-- (sem dados)\n\n`;
+        continue;
+      }
+
+      const colunas = Object.keys(rows[0]).map(c => `\`${c}\``).join(', ');
+
+      for (const row of rows) {
+        const valores = Object.values(row).map(v => {
+          if (v === null) return 'NULL';
+          if (v instanceof Date) return `'${v.toISOString().slice(0, 19).replace('T', ' ')}'`;
+          return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+        }).join(', ');
+        sql += `INSERT INTO \`${tabela}\` (${colunas}) VALUES (${valores});\n`;
+      }
+      sql += '\n';
+    }
+
+    sql += 'SET FOREIGN_KEY_CHECKS=1;\n';
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="backup_lab.sql"');
+    res.send(sql);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // Catch-all → frontend
